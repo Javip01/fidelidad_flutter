@@ -6,51 +6,23 @@ class RegisterScreen extends StatefulWidget {
   State<RegisterScreen> createState() => _RegisterScreenState();
 }
 
-class _RegisterScreenState extends State<RegisterScreen> with SingleTickerProviderStateMixin {
+class _RegisterScreenState extends State<RegisterScreen> {
   bool _aceptoCondiciones = false;
-  late AnimationController _bgController;
-
-  @override
-  void initState() {
-    super.initState();
-    // Controlador para el fondo animado
-    _bgController = AnimationController(vsync: this, duration: const Duration(seconds: 10))..repeat();
-  }
-
-  @override
-  void dispose() {
-    _bgController.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Stack(
         children: [
-          // FONDO ANIMADO (Negro con degradados de colores rotando)
-          AnimatedBuilder(
-            animation: _bgController,
-            builder: (context, child) {
-              return Container(
-                decoration: BoxDecoration(
-                  gradient: SweepGradient(
-                    center: Alignment.center,
-                    colors: const [
-                      Color(0xFF0A0A0A), Color(0xFF8B0000),
-                      Color(0xFF0A0A0A), Color(0xFF2A0845),
-                      Color(0xFF0A0A0A), Color(0xFF8C4A00),
-                      Color(0xFF0A0A0A)
-                    ],
-                    stops: const [0.0, 0.16, 0.33, 0.5, 0.66, 0.83, 1.0],
-                    transform: GradientRotation(_bgController.value * 6.28),
-                  ),
-                ),
-              );
-            },
+          // FONDO CON LA ANIMACIÓN DE LOS GRADIENTES XML (Ampliado)
+          const Positioned.fill(
+            child: AnimacionXMLGradient(
+              borderRadius: BorderRadius.zero,
+              child: SizedBox.expand(),
+            ),
           ),
 
-          // CONTENIDO DEL REGISTRO
+          // CONTENIDO DEL REGISTRO (Modo Claro)
           Center(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(24),
@@ -58,10 +30,10 @@ class _RegisterScreenState extends State<RegisterScreen> with SingleTickerProvid
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Card(
-                    color: const Color(0xFF1E1E1E), // Fondo oscuro de la tarjeta
+                    color: Colors.white, // MODO CLARO
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(24),
-                      side: const BorderSide(color: Color(0xFF8B0000), width: 1.5), // Borde rojo
+                      side: const BorderSide(color: Color(0xFF8B0000), width: 1.5),
                     ),
                     elevation: 12,
                     child: Padding(
@@ -69,17 +41,18 @@ class _RegisterScreenState extends State<RegisterScreen> with SingleTickerProvid
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Text("Crear Cuenta", style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: Colors.white)),
+                          const Text(
+                              "Crear Cuenta",
+                              style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: Colors.black) // Texto Negro
+                          ),
                           const SizedBox(height: 32),
 
-                          // SOLO EMAIL Y CONTRASEÑAS
                           _buildTextField("Email", false),
                           _buildTextField("Contraseña", true),
                           _buildTextField("Confirmar Contraseña", true),
 
                           const SizedBox(height: 8),
 
-                          // CHECKBOX CONDICIONES
                           Row(
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
@@ -91,19 +64,20 @@ class _RegisterScreenState extends State<RegisterScreen> with SingleTickerProvid
                                   onChanged: (val) => setState(() => _aceptoCondiciones = val!),
                                   checkColor: Colors.white,
                                   activeColor: const Color(0xFF8B0000),
-                                  side: const BorderSide(color: Color(0xFF8B0000)),
                                 ),
                               ),
                               const SizedBox(width: 12),
                               const Expanded(
-                                child: Text("Leer y aceptar Términos y Condiciones", style: TextStyle(color: Color(0xFF8B0000), fontWeight: FontWeight.bold, fontSize: 13)),
+                                child: Text(
+                                    "Leer y aceptar Términos y Condiciones",
+                                    style: TextStyle(color: Color(0xFF8B0000), fontWeight: FontWeight.bold, fontSize: 13)
+                                ),
                               ),
                             ],
                           ),
 
                           const SizedBox(height: 32),
 
-                          // BOTÓN REGISTRARSE
                           SizedBox(
                             width: double.infinity,
                             height: 55,
@@ -122,10 +96,12 @@ class _RegisterScreenState extends State<RegisterScreen> with SingleTickerProvid
                   ),
                   const SizedBox(height: 24),
 
-                  // VOLVER AL LOGIN
                   GestureDetector(
                     onTap: () => Navigator.pop(context),
-                    child: const Text("¿Ya tienes cuenta? Inicia sesión aquí", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
+                    child: const Text(
+                        "¿Ya tienes cuenta? Inicia sesión aquí",
+                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)
+                    ),
                   ),
                 ],
               ),
@@ -141,15 +117,15 @@ class _RegisterScreenState extends State<RegisterScreen> with SingleTickerProvid
       padding: const EdgeInsets.only(bottom: 16),
       child: TextField(
         obscureText: obscure,
-        style: const TextStyle(color: Colors.white),
+        style: const TextStyle(color: Colors.black), // Texto Negro
         decoration: InputDecoration(
           labelText: label,
-          labelStyle: TextStyle(color: Colors.grey.shade400),
+          labelStyle: TextStyle(color: Colors.grey.shade600),
           filled: true,
-          fillColor: const Color(0xFF121212), // Fondo más oscuro para el input
+          fillColor: const Color(0xFFF5F5F5),
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
           enabledBorder: OutlineInputBorder(
-            borderSide: const BorderSide(color: Colors.white12),
+            borderSide: const BorderSide(color: Colors.black12),
             borderRadius: BorderRadius.circular(12),
           ),
           focusedBorder: OutlineInputBorder(
@@ -159,6 +135,54 @@ class _RegisterScreenState extends State<RegisterScreen> with SingleTickerProvid
           suffixIcon: obscure ? const Icon(Icons.remove_red_eye, color: Color(0xFF8B0000)) : null,
         ),
       ),
+    );
+  }
+}
+
+// INCLUYO LA ANIMACIÓN AQUÍ PARA QUE FUNCIONE AL COPIAR/PEGAR
+class AnimacionXMLGradient extends StatefulWidget {
+  final Widget child;
+  final BorderRadius borderRadius;
+  const AnimacionXMLGradient({super.key, required this.child, required this.borderRadius});
+
+  @override
+  State<AnimacionXMLGradient> createState() => _AnimacionXMLGradientState();
+}
+
+class _AnimacionXMLGradientState extends State<AnimacionXMLGradient> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  final LinearGradient grad1 = const LinearGradient(colors: [Color(0xFF0A0A0A), Color(0xFF3E0000)], begin: Alignment.bottomLeft, end: Alignment.topRight);
+  final LinearGradient grad2 = const LinearGradient(colors: [Color(0xFF121212), Color(0xFF8C4A00)], begin: Alignment.bottomCenter, end: Alignment.topCenter);
+  final LinearGradient grad3 = const LinearGradient(colors: [Color(0xFF000000), Color(0xFF2A0845)], begin: Alignment.bottomRight, end: Alignment.topLeft);
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(vsync: this, duration: const Duration(seconds: 12))..repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        double t = _controller.value * 3;
+        LinearGradient currentGradient;
+        if (t < 1) currentGradient = LinearGradient.lerp(grad1, grad2, t)!;
+        else if (t < 2) currentGradient = LinearGradient.lerp(grad2, grad3, t - 1)!;
+        else currentGradient = LinearGradient.lerp(grad3, grad1, t - 2)!;
+
+        return Container(
+          decoration: BoxDecoration(borderRadius: widget.borderRadius, gradient: currentGradient),
+          child: widget.child,
+        );
+      },
     );
   }
 }
