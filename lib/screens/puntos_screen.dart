@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
-import 'register_screen.dart'; // Para usar la AnimacionXMLGradient
+import 'register_screen.dart'; // Asegúrate de que esta importación apunta a tu AnimacionXMLGradient
 
 class PuntosScreen extends StatefulWidget {
   const PuntosScreen({super.key});
@@ -9,7 +9,7 @@ class PuntosScreen extends StatefulWidget {
 }
 
 class _PuntosScreenState extends State<PuntosScreen> {
-  // POPUP CENTRAL DEL QR (Se mantiene oscuro para visibilidad)
+  // POPUP CENTRAL DEL QR OPTIMIZADO PARA 60FPS
   void _mostrarQrPopup() {
     showGeneralDialog(
       context: context,
@@ -19,44 +19,57 @@ class _PuntosScreenState extends State<PuntosScreen> {
       transitionDuration: const Duration(milliseconds: 400),
       pageBuilder: (context, animation, secondaryAnimation) {
         return Center(
-          child: Material(
-            color: Colors.transparent,
-            child: Container(
-              margin: const EdgeInsets.symmetric(horizontal: 32),
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: const Color(0xFF1E1E1E), // VENTANA QR OSCURA
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: const Color(0xFF8B0000), width: 2),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text("Tu Código QR", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
-                  const SizedBox(height: 24),
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
-                    child: QrImageView(
-                      data: "USER_QR_${DateTime.now().millisecondsSinceEpoch}",
-                      version: QrVersions.auto,
-                      size: 200.0,
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 50,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF8B0000),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          // REPAINT BOUNDARY: Convierte la ventana en una textura para animarla sin lag
+          child: RepaintBoundary(
+            child: Material(
+              color: const Color(0xFF1E1E1E), // VENTANA QR OSCURA
+              elevation: 24, // Sombra acelerada por hardware (sin lag)
+              shadowColor: Colors.black,
+              borderRadius: BorderRadius.circular(24),
+              child: Container(
+                width: MediaQuery.of(context).size.width * 0.85, // Ancho responsivo
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: const Color(0xFF8B0000), width: 2),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text("Tu Código QR", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
+                    const SizedBox(height: 24),
+
+                    // REPAINT BOUNDARY 2: Congela el dibujo matemático del QR
+                    RepaintBoundary(
+                      child: Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
+                        child: QrImageView(
+                          data: "USER_QR_${DateTime.now().millisecondsSinceEpoch}",
+                          version: QrVersions.auto,
+                          size: 200.0,
+                          backgroundColor: Colors.white,
+                          errorCorrectionLevel: QrErrorCorrectLevel.M,
+                        ),
                       ),
-                      onPressed: () => Navigator.pop(context),
-                      child: const Text("CERRAR", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                     ),
-                  )
-                ],
+                    const SizedBox(height: 24),
+
+                    SizedBox(
+                      width: double.infinity,
+                      height: 50,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF8B0000),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          elevation: 0,
+                        ),
+                        onPressed: () => Navigator.pop(context),
+                        child: const Text("CERRAR", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                      ),
+                    )
+                  ],
+                ),
               ),
             ),
           ),
@@ -74,7 +87,7 @@ class _PuntosScreenState extends State<PuntosScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5), // MODO CLARO
+      backgroundColor: const Color(0xFFF5F5F5),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
@@ -87,7 +100,6 @@ class _PuntosScreenState extends State<PuntosScreen> {
                   width: double.infinity,
                   child: Stack(
                     children: [
-                      // Contenido de Puntos
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 32),
                         child: Center(
@@ -99,7 +111,6 @@ class _PuntosScreenState extends State<PuntosScreen> {
                           ),
                         ),
                       ),
-                      // BOTÓN VOLVER ATRÁS (Dentro de la tarjeta, arriba a la izquierda)
                       Positioned(
                         top: 8,
                         left: 8,
@@ -114,7 +125,7 @@ class _PuntosScreenState extends State<PuntosScreen> {
               ),
               const SizedBox(height: 16),
 
-              // 2. INFO BANNER (Modo Claro)
+              // 2. INFO BANNER
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(12),

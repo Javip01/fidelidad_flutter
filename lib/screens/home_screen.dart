@@ -10,8 +10,9 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMixin {
-  int _selectedIndex = 0; // 0: Ofertas, 1: Ajustes
-  late AnimationController _controller;
+  int _selectedIndex = 0;
+  late AnimationController _cameraController;
+  late PageController _pageController; // Controlador para el deslizamiento tipo iPhone
 
   final List<Widget> _screens = [
     const OfertasScreen(),
@@ -21,7 +22,10 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
+    // Inicializamos el controlador de páginas en la pestaña actual
+    _pageController = PageController(initialPage: _selectedIndex);
+
+    _cameraController = AnimationController(
       duration: const Duration(milliseconds: 1500),
       vsync: this,
     )..repeat(reverse: true);
@@ -29,7 +33,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
   @override
   void dispose() {
-    _controller.dispose();
+    _cameraController.dispose();
+    _pageController.dispose(); // Importante limpiar el controlador
     super.dispose();
   }
 
@@ -39,14 +44,30 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     await picker.pickImage(source: ImageSource.camera);
   }
 
+  // Función que maneja el cambio de pestaña con la animación tipo iPhone
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+
+    // Animación de deslizamiento horizontal muy suave
+    _pageController.animateToPage(
+      index,
+      duration: const Duration(milliseconds: 400), // Duración de la transición
+      curve: Curves.easeOutCubic, // Curva suave tipo iOS
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5), // Fondo general en modo claro
       body: Stack(
         children: [
-          IndexedStack(
-            index: _selectedIndex,
+          // SISTEMA DE PÁGINAS DESLIZANTES
+          PageView(
+            controller: _pageController,
+            physics: const NeverScrollableScrollPhysics(), // Bloquea el deslizar con el dedo (opcional, quítalo si quieres permitirlo)
             children: _screens,
           ),
 
@@ -57,11 +78,11 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               height: 80,
               padding: const EdgeInsets.only(bottom: 20),
               decoration: BoxDecoration(
-                color: Colors.white, // Fondo BLANCO para la barra inferior
+                color: Colors.white,
                 borderRadius: const BorderRadius.only(topLeft: Radius.circular(20), topRight: Radius.circular(20)),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.05), // Sombra muy sutil
+                    color: Colors.black.withOpacity(0.05),
                     blurRadius: 10,
                     offset: const Offset(0, -4),
                   )
@@ -71,7 +92,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 children: [
                   Expanded(
                     child: InkWell(
-                      onTap: () => setState(() => _selectedIndex = 0),
+                      onTap: () => _onItemTapped(0),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -84,7 +105,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                   const SizedBox(width: 80), // Espacio central para la cámara
                   Expanded(
                     child: InkWell(
-                      onTap: () => setState(() => _selectedIndex = 1),
+                      onTap: () => _onItemTapped(1),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -104,7 +125,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
             bottom: 35,
             left: MediaQuery.of(context).size.width / 2 - 32.5,
             child: ScaleTransition(
-              scale: Tween(begin: 1.0, end: 1.08).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut)),
+              scale: Tween(begin: 1.0, end: 1.08).animate(CurvedAnimation(parent: _cameraController, curve: Curves.easeInOut)),
               child: FloatingActionButton(
                 backgroundColor: const Color(0xFF8B0000), // Rojo primario
                 elevation: 6,
