@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'register_screen.dart'; // Para usar la AnimacionXMLGradient
 
 class PuntosScreen extends StatefulWidget {
   const PuntosScreen({super.key});
@@ -7,27 +8,12 @@ class PuntosScreen extends StatefulWidget {
   State<PuntosScreen> createState() => _PuntosScreenState();
 }
 
-class _PuntosScreenState extends State<PuntosScreen> with SingleTickerProviderStateMixin {
-  late AnimationController _bgController;
-
-  @override
-  void initState() {
-    super.initState();
-    // Animación suave para el fondo de la cabecera de puntos
-    _bgController = AnimationController(vsync: this, duration: const Duration(seconds: 8))..repeat(reverse: true);
-  }
-
-  @override
-  void dispose() {
-    _bgController.dispose();
-    super.dispose();
-  }
-
-  // POPUP CENTRAL DEL QR
+class _PuntosScreenState extends State<PuntosScreen> {
+  // POPUP CENTRAL DEL QR (Se mantiene oscuro para visibilidad)
   void _mostrarQrPopup() {
     showGeneralDialog(
       context: context,
-      barrierColor: Colors.black.withOpacity(0.8),
+      barrierColor: Colors.black.withOpacity(0.85),
       barrierDismissible: true,
       barrierLabel: 'Cerrar',
       transitionDuration: const Duration(milliseconds: 400),
@@ -39,17 +25,14 @@ class _PuntosScreenState extends State<PuntosScreen> with SingleTickerProviderSt
               margin: const EdgeInsets.symmetric(horizontal: 32),
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: const Color(0xFF1E1E1E), // Modo oscuro para el popup
+                color: const Color(0xFF1E1E1E), // VENTANA QR OSCURA
                 borderRadius: BorderRadius.circular(24),
                 border: Border.all(color: const Color(0xFF8B0000), width: 2),
-                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.5), blurRadius: 20)],
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   const Text("Tu Código QR", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
-                  const SizedBox(height: 8),
-                  const Text("Muéstralo en la caja del local", style: TextStyle(color: Colors.white54, fontSize: 13)),
                   const SizedBox(height: 24),
                   Container(
                     padding: const EdgeInsets.all(12),
@@ -58,7 +41,6 @@ class _PuntosScreenState extends State<PuntosScreen> with SingleTickerProviderSt
                       data: "USER_QR_${DateTime.now().millisecondsSinceEpoch}",
                       version: QrVersions.auto,
                       size: 200.0,
-                      backgroundColor: Colors.white,
                     ),
                   ),
                   const SizedBox(height: 24),
@@ -92,88 +74,85 @@ class _PuntosScreenState extends State<PuntosScreen> with SingleTickerProviderSt
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF121212), // Fondo general oscuro
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
+      backgroundColor: const Color(0xFFF5F5F5), // MODO CLARO
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          padding: const EdgeInsets.all(16.0),
           child: Column(
             children: [
-              // 1. CABECERA TUS PUNTOS
-              AnimatedBuilder(
-                  animation: _bgController,
-                  builder: (context, child) {
-                    return Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(vertical: 24),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(20),
-                        gradient: RadialGradient(
-                          center: Alignment.center,
-                          radius: 1.5,
-                          colors: [
-                            Color.lerp(const Color(0xFF3E0000), const Color(0xFF1A0000), _bgController.value)!,
-                            const Color(0xFF0A0A0A)
-                          ],
+              // 1. CABECERA TUS PUNTOS CON BOTÓN ATRÁS INTEGRADO
+              AnimacionXMLGradient(
+                borderRadius: BorderRadius.circular(24),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: Stack(
+                    children: [
+                      // Contenido de Puntos
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 32),
+                        child: Center(
+                          child: Column(
+                            children: const [
+                              Text("TUS PUNTOS", style: TextStyle(color: Colors.white70, letterSpacing: 2, fontSize: 12)),
+                              Text("1.250", style: TextStyle(color: Colors.white, fontSize: 56, fontWeight: FontWeight.bold)),
+                            ],
+                          ),
                         ),
-                        border: Border.all(color: const Color(0xFF8B0000).withOpacity(0.3)),
                       ),
-                      child: const Column(
-                        children: [
-                          Text("TUS PUNTOS", style: TextStyle(color: Colors.white70, letterSpacing: 2, fontSize: 12)),
-                          Text("1.250", style: TextStyle(color: Colors.white, fontSize: 50, fontWeight: FontWeight.bold)),
-                        ],
+                      // BOTÓN VOLVER ATRÁS (Dentro de la tarjeta, arriba a la izquierda)
+                      Positioned(
+                        top: 8,
+                        left: 8,
+                        child: IconButton(
+                          icon: const Icon(Icons.arrow_back, color: Colors.white70),
+                          onPressed: () => Navigator.pop(context),
+                        ),
                       ),
-                    );
-                  }
+                    ],
+                  ),
+                ),
               ),
               const SizedBox(height: 16),
 
-              // 2. BANNER DE INFORMACIÓN
+              // 2. INFO BANNER (Modo Claro)
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1E1E1E),
+                  color: Colors.white,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.white12),
+                  border: Border.all(color: Colors.black12),
                 ),
-                child: const Row(
+                child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.info, color: Colors.lightBlueAccent, size: 18),
+                  children: const [
+                    Icon(Icons.info, color: Colors.blue, size: 18),
                     SizedBox(width: 8),
-                    Text("Pulsa nuestro logo central para abrir tu código QR.", style: TextStyle(color: Colors.white70, fontSize: 12)),
+                    Text(
+                        "Pulsa nuestro logo central para abrir tu código QR.",
+                        style: TextStyle(color: Colors.black54, fontSize: 12)
+                    ),
                   ],
                 ),
               ),
               const SizedBox(height: 16),
 
-              // 3. PESTAÑAS (Títulos)
+              // 3. TÍTULOS PESTAÑAS
               Row(
                 children: [
-                  Expanded(child: Container(padding: const EdgeInsets.symmetric(vertical: 8), decoration: const BoxDecoration(color: Color(0xFF3E0000), borderRadius: BorderRadius.only(topLeft: Radius.circular(8), bottomLeft: Radius.circular(8))), child: const Text("Restaurantes", textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)))),
+                  Expanded(child: _buildTabTitle("Restaurantes", true)),
                   const SizedBox(width: 4),
-                  Expanded(child: Container(padding: const EdgeInsets.symmetric(vertical: 8), decoration: const BoxDecoration(color: Color(0xFF3E0000), borderRadius: BorderRadius.only(topRight: Radius.circular(8), bottomRight: Radius.circular(8))), child: const Text("Experiencias", textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)))),
+                  Expanded(child: _buildTabTitle("Experiencias", false)),
                 ],
               ),
               const SizedBox(height: 8),
 
-              // 4. CUADRÍCULA DE IMÁGENES + LOGO CENTRAL (Botón QR)
+              // 4. CUADRÍCULA Y BOTÓN CENTRAL
               Expanded(
                 child: Stack(
                   children: [
-                    // Fondo con la cuadrícula de 3 filas y 2 columnas
                     Column(
                       children: [
-                        // FILA 1: Rincón Guay | Lavapiés
                         Expanded(
                           child: Row(
                             children: [
@@ -184,7 +163,6 @@ class _PuntosScreenState extends State<PuntosScreen> with SingleTickerProviderSt
                           ),
                         ),
                         const SizedBox(height: 8),
-                        // FILA 2: One Love | The Ring (Imágenes apartadas para dejar sitio al centro)
                         Expanded(
                           child: Row(
                             children: [
@@ -195,7 +173,6 @@ class _PuntosScreenState extends State<PuntosScreen> with SingleTickerProviderSt
                           ),
                         ),
                         const SizedBox(height: 8),
-                        // FILA 3: Rebel Flame | Sauna Toledo
                         Expanded(
                           child: Row(
                             children: [
@@ -207,23 +184,19 @@ class _PuntosScreenState extends State<PuntosScreen> with SingleTickerProviderSt
                         ),
                       ],
                     ),
-
-                    // BOTÓN CENTRAL (Logo que abre el QR)
+                    // BOTÓN LOGO CENTRAL
                     Center(
                       child: GestureDetector(
-                        onTap: _mostrarQrPopup, // ESTE ES EL ÚNICO BOTÓN AHORA
+                        onTap: _mostrarQrPopup,
                         child: Container(
-                          width: 140,
-                          height: 140,
+                          width: 130,
+                          height: 130,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: Colors.black, // Fondo negro
-                            border: Border.all(color: Colors.white, width: 4), // Borde blanco grueso
-                            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.8), blurRadius: 15, spreadRadius: 5)],
-                            image: const DecorationImage(
-                              image: AssetImage('lib/assets/logo.png'), // Tu logo principal
-                              fit: BoxFit.contain,
-                            ),
+                            color: Colors.white,
+                            border: Border.all(color: const Color(0xFF8B0000), width: 3),
+                            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 10)],
+                            image: const DecorationImage(image: AssetImage('lib/assets/logo.png'), fit: BoxFit.contain),
                           ),
                         ),
                       ),
@@ -231,7 +204,6 @@ class _PuntosScreenState extends State<PuntosScreen> with SingleTickerProviderSt
                   ],
                 ),
               ),
-              const SizedBox(height: 16),
             ],
           ),
         ),
@@ -239,23 +211,32 @@ class _PuntosScreenState extends State<PuntosScreen> with SingleTickerProviderSt
     );
   }
 
-  // Constructor de las celdas de fondo (No son clicables, solo visuales)
+  Widget _buildTabTitle(String title, bool isLeft) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFF8B0000),
+        borderRadius: isLeft
+            ? const BorderRadius.only(topLeft: Radius.circular(8), bottomLeft: Radius.circular(8))
+            : const BorderRadius.only(topRight: Radius.circular(8), bottomRight: Radius.circular(8)),
+      ),
+      child: Text(title, textAlign: TextAlign.center, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
+    );
+  }
+
   Widget _buildImageCell(String bgPath, String logoPath, Alignment logoAlignment) {
     return ClipRRect(
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(16),
       child: Stack(
         fit: StackFit.expand,
         children: [
-          // Imagen de fondo
           Image.asset(bgPath, fit: BoxFit.cover),
-          // Oscurecedor sutil para que el logo resalte
-          Container(color: Colors.black.withOpacity(0.4)),
-          // Logo posicionado
+          Container(color: Colors.black26),
           Padding(
             padding: const EdgeInsets.all(12.0),
             child: Align(
               alignment: logoAlignment,
-              child: Image.asset(logoPath, width: 80, height: 80, fit: BoxFit.contain),
+              child: Image.asset(logoPath, width: 70, height: 70, fit: BoxFit.contain),
             ),
           ),
         ],
