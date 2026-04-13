@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
-import 'ofertas_screen.dart'; // Importa AnimacionXMLGradient
 
 class PuntosScreen extends StatefulWidget {
   const PuntosScreen({super.key});
@@ -8,31 +7,31 @@ class PuntosScreen extends StatefulWidget {
   State<PuntosScreen> createState() => _PuntosScreenState();
 }
 
-class _PuntosScreenState extends State<PuntosScreen> {
-  int _activeColumn = 1;
+class _PuntosScreenState extends State<PuntosScreen> with SingleTickerProviderStateMixin {
+  late AnimationController _bgController;
 
-  final List<_LocalData> _restaurantes = [
-    _LocalData("El Rincón Guay", "lib/assets/elrinconguay_grad.png", "lib/assets/elrinconguay.png"),
-    _LocalData("One Love", "lib/assets/onelove_grad.png", "lib/assets/onelove.png"),
-    _LocalData("Rebel Flame", "lib/assets/rebelflame_grad.png", "lib/assets/rebelflame.png"),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    // Animación suave para el fondo de la cabecera de puntos
+    _bgController = AnimationController(vsync: this, duration: const Duration(seconds: 8))..repeat(reverse: true);
+  }
 
-  final List<_LocalData> _experiencias = [
-    _LocalData("Sauna Lavapiés", "lib/assets/saunalava_grad.png", "lib/assets/saunalava.png"),
-    _LocalData("The Private Ring", "lib/assets/theringprivate_grad.png", "lib/assets/thering.png"),
-    _LocalData("Sauna Toledo", "lib/assets/saunatoledo_grad.png", "lib/assets/saunatoledo.png"),
-  ];
+  @override
+  void dispose() {
+    _bgController.dispose();
+    super.dispose();
+  }
 
-  // POPUP CENTRAL DEL QR (RECONSTRUIDO Y GARANTIZADO)
-  void _mostrarQrPopup(String nombre) {
+  // POPUP CENTRAL DEL QR
+  void _mostrarQrPopup() {
     showGeneralDialog(
       context: context,
-      barrierColor: Colors.black.withOpacity(0.7), // Oscurece el fondo
+      barrierColor: Colors.black.withOpacity(0.8),
       barrierDismissible: true,
       barrierLabel: 'Cerrar',
       transitionDuration: const Duration(milliseconds: 400),
       pageBuilder: (context, animation, secondaryAnimation) {
-        // En lugar de AlertDialog, usamos Center y Material para evitar colapsos
         return Center(
           child: Material(
             color: Colors.transparent,
@@ -40,54 +39,36 @@ class _PuntosScreenState extends State<PuntosScreen> {
               margin: const EdgeInsets.symmetric(horizontal: 32),
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: const Color(0xFF1E1E1E), // Modo oscuro para el popup
                 borderRadius: BorderRadius.circular(24),
-                boxShadow: [
-                  BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 20, spreadRadius: 5)
-                ],
+                border: Border.all(color: const Color(0xFF8B0000), width: 2),
+                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.5), blurRadius: 20)],
               ),
               child: Column(
-                mainAxisSize: MainAxisSize.min, // Se ajusta al contenido
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text(
-                      "Escanea este QR en caja",
-                      style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 16)
-                  ),
+                  const Text("Tu Código QR", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
+                  const SizedBox(height: 8),
+                  const Text("Muéstralo en la caja del local", style: TextStyle(color: Colors.white54, fontSize: 13)),
                   const SizedBox(height: 24),
-
-                  // CONTENEDOR DEL QR REAL
                   Container(
                     padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 10)],
-                    ),
+                    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
                     child: QrImageView(
-                      data: "PUNTOS_${nombre}_${DateTime.now().millisecondsSinceEpoch}",
+                      data: "USER_QR_${DateTime.now().millisecondsSinceEpoch}",
                       version: QrVersions.auto,
                       size: 200.0,
                       backgroundColor: Colors.white,
-                      errorCorrectionLevel: QrErrorCorrectLevel.M,
                     ),
                   ),
-
                   const SizedBox(height: 24),
-                  Text(
-                      nombre,
-                      style: const TextStyle(color: Colors.black87, fontSize: 20, fontWeight: FontWeight.bold)
-                  ),
-                  const SizedBox(height: 24),
-
-                  // BOTÓN DE CERRAR
                   SizedBox(
                     width: double.infinity,
                     height: 50,
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF8B0000), // Rojo de la app
+                        backgroundColor: const Color(0xFF8B0000),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        elevation: 0,
                       ),
                       onPressed: () => Navigator.pop(context),
                       child: const Text("CERRAR", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
@@ -100,13 +81,9 @@ class _PuntosScreenState extends State<PuntosScreen> {
         );
       },
       transitionBuilder: (context, animation, secondaryAnimation, child) {
-        // Animación de rebote elástico hacia el centro
         return ScaleTransition(
           scale: CurvedAnimation(parent: animation, curve: Curves.easeOutBack),
-          child: FadeTransition(
-            opacity: animation,
-            child: child,
-          ),
+          child: FadeTransition(opacity: animation, child: child),
         );
       },
     );
@@ -115,171 +92,174 @@ class _PuntosScreenState extends State<PuntosScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5), // Fondo modo claro
-      body: Stack(
-        children: [
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.only(top: 80, left: 16, right: 16, bottom: 16),
-              child: Column(
-                children: [
-                  // CABECERA (Píldora Puntos con Animación XML)
-                  AnimacionXMLGradient(
-                    borderRadius: BorderRadius.circular(24),
-                    child: Container(
+      backgroundColor: const Color(0xFF121212), // Fondo general oscuro
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          child: Column(
+            children: [
+              // 1. CABECERA TUS PUNTOS
+              AnimatedBuilder(
+                  animation: _bgController,
+                  builder: (context, child) {
+                    return Container(
                       width: double.infinity,
-                      padding: const EdgeInsets.all(24),
+                      padding: const EdgeInsets.symmetric(vertical: 24),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(20),
+                        gradient: RadialGradient(
+                          center: Alignment.center,
+                          radius: 1.5,
+                          colors: [
+                            Color.lerp(const Color(0xFF3E0000), const Color(0xFF1A0000), _bgController.value)!,
+                            const Color(0xFF0A0A0A)
+                          ],
+                        ),
+                        border: Border.all(color: const Color(0xFF8B0000).withOpacity(0.3)),
+                      ),
                       child: const Column(
                         children: [
                           Text("TUS PUNTOS", style: TextStyle(color: Colors.white70, letterSpacing: 2, fontSize: 12)),
-                          Text("1.250", style: TextStyle(color: Colors.white, fontSize: 56, fontWeight: FontWeight.bold)),
+                          Text("1.250", style: TextStyle(color: Colors.white, fontSize: 50, fontWeight: FontWeight.bold)),
                         ],
                       ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // COLUMNAS ACORDEÓN CON EMPUJE FÍSICO REAL
-                  Expanded(
-                    child: LayoutBuilder(
-                      builder: (context, constraints) {
-                        double totalWidth = constraints.maxWidth - 8;
-
-                        double widthCol1 = _activeColumn == 1 ? totalWidth * 0.72 : totalWidth * 0.28;
-                        double widthCol2 = _activeColumn == 2 ? totalWidth * 0.72 : totalWidth * 0.28;
-
-                        return Row(
-                          children: [
-                            _buildColumnaAcordeonFisico("Restaurantes", _restaurantes, 1, widthCol1),
-                            const SizedBox(width: 8),
-                            _buildColumnaAcordeonFisico("Experiencias", _experiencias, 2, widthCol2),
-                          ],
-                        );
-                      },
-                    ),
-                  ),
-                ],
+                    );
+                  }
               ),
-            ),
-          ),
+              const SizedBox(height: 16),
 
-          // BARRA SUPERIOR PÍLDORA FLOTANTE
-          Positioned(
-            top: 40, left: 16, right: 16,
-            child: Container(
-              height: 55,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              decoration: BoxDecoration(color: const Color(0xFF1A0000), borderRadius: BorderRadius.circular(30)),
-              child: Row(
+              // 2. BANNER DE INFORMACIÓN
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1E1E1E),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.white12),
+                ),
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.info, color: Colors.lightBlueAccent, size: 18),
+                    SizedBox(width: 8),
+                    Text("Pulsa nuestro logo central para abrir tu código QR.", style: TextStyle(color: Colors.white70, fontSize: 12)),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // 3. PESTAÑAS (Títulos)
+              Row(
                 children: [
-                  IconButton(icon: const Icon(Icons.arrow_back_ios, color: Colors.white, size: 18), onPressed: () => Navigator.pop(context)),
-                  const Expanded(child: Text("Mis Puntos", textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16))),
-                  const SizedBox(width: 48), // Balance visual
+                  Expanded(child: Container(padding: const EdgeInsets.symmetric(vertical: 8), decoration: const BoxDecoration(color: Color(0xFF3E0000), borderRadius: BorderRadius.only(topLeft: Radius.circular(8), bottomLeft: Radius.circular(8))), child: const Text("Restaurantes", textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)))),
+                  const SizedBox(width: 4),
+                  Expanded(child: Container(padding: const EdgeInsets.symmetric(vertical: 8), decoration: const BoxDecoration(color: Color(0xFF3E0000), borderRadius: BorderRadius.only(topRight: Radius.circular(8), bottomRight: Radius.circular(8))), child: const Text("Experiencias", textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)))),
                 ],
               ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+              const SizedBox(height: 8),
 
-  Widget _buildColumnaAcordeonFisico(String title, List<_LocalData> locales, int index, double currentWidth) {
-    bool isExpanded = _activeColumn == index;
+              // 4. CUADRÍCULA DE IMÁGENES + LOGO CENTRAL (Botón QR)
+              Expanded(
+                child: Stack(
+                  children: [
+                    // Fondo con la cuadrícula de 3 filas y 2 columnas
+                    Column(
+                      children: [
+                        // FILA 1: Rincón Guay | Lavapiés
+                        Expanded(
+                          child: Row(
+                            children: [
+                              Expanded(child: _buildImageCell("lib/assets/elrinconguay_grad.png", "lib/assets/elrinconguay.png", Alignment.center)),
+                              const SizedBox(width: 8),
+                              Expanded(child: _buildImageCell("lib/assets/saunalava_grad.png", "lib/assets/saunalava.png", Alignment.center)),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        // FILA 2: One Love | The Ring (Imágenes apartadas para dejar sitio al centro)
+                        Expanded(
+                          child: Row(
+                            children: [
+                              Expanded(child: _buildImageCell("lib/assets/onelove_grad.png", "lib/assets/onelove.png", Alignment.centerLeft)),
+                              const SizedBox(width: 8),
+                              Expanded(child: _buildImageCell("lib/assets/theringprivate_grad.png", "lib/assets/thering.png", Alignment.centerRight)),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        // FILA 3: Rebel Flame | Sauna Toledo
+                        Expanded(
+                          child: Row(
+                            children: [
+                              Expanded(child: _buildImageCell("lib/assets/rebelflame_grad.png", "lib/assets/rebelflame.png", Alignment.bottomCenter)),
+                              const SizedBox(width: 8),
+                              Expanded(child: _buildImageCell("lib/assets/saunatoledo_grad.png", "lib/assets/saunatoledo.png", Alignment.bottomCenter)),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
 
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 550),
-      curve: Curves.easeOutCubic,
-      width: currentWidth,
-      child: Column(
-        children: [
-          // Título de la columna
-          Container(
-            width: double.infinity, padding: const EdgeInsets.symmetric(vertical: 10),
-            decoration: BoxDecoration(color: const Color(0xFF1A0000), borderRadius: BorderRadius.circular(16)),
-            child: Text(title, textAlign: TextAlign.center, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12), maxLines: 1, overflow: TextOverflow.clip),
-          ),
-          const SizedBox(height: 8),
-
-          // Locales
-          ...locales.map((data) => Expanded(
-            child: GestureDetector(
-              onTap: () {
-                if (isExpanded) {
-                  _mostrarQrPopup(data.nombre); // Lanza el Popup asegurado
-                } else {
-                  setState(() => _activeColumn = index); // Expande la columna
-                }
-              },
-              child: Container(
-                margin: const EdgeInsets.only(bottom: 8),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(16),
-                  child: Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      // --- ESTADO 1: CONTRAÍDO (Animación XML + Logo) ---
-                      AnimatedOpacity(
-                        opacity: isExpanded ? 0.0 : 1.0,
-                        duration: const Duration(milliseconds: 350),
-                        child: AnimacionXMLGradient(
-                          borderRadius: BorderRadius.circular(16),
-                          child: Center(
-                              child: Padding(
-                                  padding: const EdgeInsets.all(16.0),
-                                  child: Image.asset(data.logo, fit: BoxFit.contain)
-                              )
+                    // BOTÓN CENTRAL (Logo que abre el QR)
+                    Center(
+                      child: GestureDetector(
+                        onTap: _mostrarQrPopup, // ESTE ES EL ÚNICO BOTÓN AHORA
+                        child: Container(
+                          width: 140,
+                          height: 140,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.black, // Fondo negro
+                            border: Border.all(color: Colors.white, width: 4), // Borde blanco grueso
+                            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.8), blurRadius: 15, spreadRadius: 5)],
+                            image: const DecorationImage(
+                              image: AssetImage('lib/assets/logo.png'), // Tu logo principal
+                              fit: BoxFit.contain,
+                            ),
                           ),
                         ),
                       ),
-
-                      // --- ESTADO 2: EXPANDIDO (Imagen + Overlay) ---
-                      AnimatedOpacity(
-                        opacity: isExpanded ? 1.0 : 0.0,
-                        duration: const Duration(milliseconds: 450),
-                        child: Stack(
-                          fit: StackFit.expand,
-                          children: [
-                            // ANCLAJE FÍSICO: La imagen no se estira, se recorta.
-                            Image.asset(
-                                data.imageGrad,
-                                fit: BoxFit.cover,
-                                alignment: index == 1 ? Alignment.centerLeft : Alignment.centerRight
-                            ),
-                            Container(
-                              decoration: const BoxDecoration(
-                                gradient: LinearGradient(colors: [Colors.transparent, Colors.black87], begin: Alignment.topCenter, end: Alignment.bottomCenter),
-                              ),
-                            ),
-                            Align(
-                                alignment: Alignment.bottomRight,
-                                child: Padding(
-                                    padding: const EdgeInsets.all(12),
-                                    child: Text(
-                                      data.nombre,
-                                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
-                                      maxLines: 1,
-                                      softWrap: false,
-                                      overflow: TextOverflow.clip,
-                                    )
-                                )
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
+              const SizedBox(height: 16),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Constructor de las celdas de fondo (No son clicables, solo visuales)
+  Widget _buildImageCell(String bgPath, String logoPath, Alignment logoAlignment) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          // Imagen de fondo
+          Image.asset(bgPath, fit: BoxFit.cover),
+          // Oscurecedor sutil para que el logo resalte
+          Container(color: Colors.black.withOpacity(0.4)),
+          // Logo posicionado
+          Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: Align(
+              alignment: logoAlignment,
+              child: Image.asset(logoPath, width: 80, height: 80, fit: BoxFit.contain),
             ),
-          )).toList(),
+          ),
         ],
       ),
     );
   }
-}
-
-class _LocalData {
-  final String nombre, imageGrad, logo;
-  _LocalData(this.nombre, this.imageGrad, this.logo);
 }
