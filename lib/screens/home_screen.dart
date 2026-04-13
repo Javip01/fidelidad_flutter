@@ -12,19 +12,15 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMixin {
   int _selectedIndex = 0;
   late AnimationController _cameraController;
-  late PageController _pageController; // Controlador para el deslizamiento tipo iPhone
 
   final List<Widget> _screens = [
-    const OfertasScreen(),
-    const AjustesScreen(),
+    const OfertasScreen(key: ValueKey('ofertas')),
+    const AjustesScreen(key: ValueKey('ajustes')),
   ];
 
   @override
   void initState() {
     super.initState();
-    // Inicializamos el controlador de páginas en la pestaña actual
-    _pageController = PageController(initialPage: _selectedIndex);
-
     _cameraController = AnimationController(
       duration: const Duration(milliseconds: 1500),
       vsync: this,
@@ -34,44 +30,72 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   @override
   void dispose() {
     _cameraController.dispose();
-    _pageController.dispose(); // Importante limpiar el controlador
     super.dispose();
   }
 
-  // Función para abrir la cámara nativa
   Future<void> _abrirCamara() async {
     final ImagePicker picker = ImagePicker();
     await picker.pickImage(source: ImageSource.camera);
   }
 
-  // Función que maneja el cambio de pestaña con la animación tipo iPhone
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-
-    // Animación de deslizamiento horizontal muy suave
-    _pageController.animateToPage(
-      index,
-      duration: const Duration(milliseconds: 400), // Duración de la transición
-      curve: Curves.easeOutCubic, // Curva suave tipo iOS
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5), // Fondo general en modo claro
+      backgroundColor: const Color(0xFFF5F5F5),
       body: Stack(
         children: [
-          // SISTEMA DE PÁGINAS DESLIZANTES
-          PageView(
-            controller: _pageController,
-            physics: const NeverScrollableScrollPhysics(), // Bloquea el deslizar con el dedo (opcional, quítalo si quieres permitirlo)
-            children: _screens,
+          // TRANSICIÓN UNIFORME DESDE EL BORDE REAL DE LA PANTALLA
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 500), // 500ms: Velocidad media-alta y muy fluida
+            // easeInOutSine crea un movimiento uniforme: arranca suave (sin saltos) y frena suave
+            switchInCurve: Curves.easeInOutSine,
+            switchOutCurve: Curves.easeInOutSine,
+            transitionBuilder: (Widget child, Animation<double> animation) {
+
+              final bool isAjustes = child.key == const ValueKey('ajustes');
+
+              // CORRECCIÓN: Ahora viene desde el 100% (1.0) del borde exterior del teléfono,
+              // no desde el centro, eliminando el efecto de teletransporte.
+              final double offsetX = isAjustes ? 1.0 : -1.0;
+
+              final offsetAnimation = Tween<Offset>(
+                begin: Offset(offsetX, 0.0),
+                end: Offset.zero,
+              ).animate(animation);
+
+              return FadeTransition(
+                opacity: animation,
+                child: SlideTransition(
+                  position: offsetAnimation,
+                  child: AnimatedBuilder(
+                    animation: animation,
+                    builder: (context, widgetChild) {
+                      return ShaderMask(
+                        shaderCallback: (Rect bounds) {
+                          return LinearGradient(
+                            begin: isAjustes ? Alignment.centerLeft : Alignment.centerRight,
+                            end: isAjustes ? Alignment.centerRight : Alignment.centerLeft,
+                            colors: [
+                              // El borde se hace opaco uniformemente mientras entra
+                              Colors.white.withOpacity(animation.value),
+                              Colors.white
+                            ],
+                            stops: const [0.0, 0.25], // Ampliado al 25% para un difuminado más inmersivo
+                          ).createShader(bounds);
+                        },
+                        blendMode: BlendMode.dstIn,
+                        child: widgetChild,
+                      );
+                    },
+                    child: child,
+                  ),
+                ),
+              );
+            },
+            child: _screens[_selectedIndex],
           ),
 
-          // BARRA INFERIOR (MENÚ) EN MODO CLARO
+          // BARRA INFERIOR (MENÚ)
           Align(
             alignment: Alignment.bottomCenter,
             child: Container(
@@ -92,7 +116,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 children: [
                   Expanded(
                     child: InkWell(
-                      onTap: () => _onItemTapped(0),
+                      onTap: () => setState(() => _selectedIndex = 0),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -102,10 +126,10 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                       ),
                     ),
                   ),
-                  const SizedBox(width: 80), // Espacio central para la cámara
+                  const SizedBox(width: 80), // Espacio para la cámara
                   Expanded(
                     child: InkWell(
-                      onTap: () => _onItemTapped(1),
+                      onTap: () => setState(() => _selectedIndex = 1),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -127,7 +151,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
             child: ScaleTransition(
               scale: Tween(begin: 1.0, end: 1.08).animate(CurvedAnimation(parent: _cameraController, curve: Curves.easeInOut)),
               child: FloatingActionButton(
-                backgroundColor: const Color(0xFF8B0000), // Rojo primario
+                backgroundColor: const Color(0xFF8B0000),
                 elevation: 6,
                 onPressed: _abrirCamara,
                 child: const Icon(Icons.camera_alt, color: Colors.white, size: 32),
