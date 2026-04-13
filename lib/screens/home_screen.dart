@@ -9,14 +9,10 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMixin {
+class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   int _selectedIndex = 0;
   late AnimationController _cameraController;
-
-  final List<Widget> _screens = [
-    const OfertasScreen(key: ValueKey('ofertas')),
-    const AjustesScreen(key: ValueKey('ajustes')),
-  ];
+  late AnimationController _pageController;
 
   @override
   void initState() {
@@ -25,140 +21,150 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       duration: const Duration(milliseconds: 1500),
       vsync: this,
     )..repeat(reverse: true);
+
+    _pageController = AnimationController(
+      duration: const Duration(milliseconds: 600), // Un poco más lento para que se aprecie la fluidez
+      vsync: this,
+    );
   }
 
   @override
   void dispose() {
     _cameraController.dispose();
+    _pageController.dispose();
     super.dispose();
   }
 
-  Future<void> _abrirCamara() async {
-    final ImagePicker picker = ImagePicker();
-    await picker.pickImage(source: ImageSource.camera);
+  void _onItemTapped(int index) {
+    if (_selectedIndex == index) return;
+    setState(() => _selectedIndex = index);
+    if (index == 1) {
+      _pageController.forward();
+    } else {
+      _pageController.reverse();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    // Definimos una animación de opacidad que solo es visible durante el trayecto
+    // El "Interval" hace que aparezca rápido al inicio y desaparezca al final
+    final Animation<double> haloOpacity = CurvedAnimation(
+      parent: _pageController,
+      curve: const Interval(0.1, 0.9, curve: Curves.easeInOut),
+    );
+
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
       body: Stack(
         children: [
-          // TRANSICIÓN UNIFORME DESDE EL BORDE REAL DE LA PANTALLA
-          AnimatedSwitcher(
-            duration: const Duration(milliseconds: 500), // 500ms: Velocidad media-alta y muy fluida
-            // easeInOutSine crea un movimiento uniforme: arranca suave (sin saltos) y frena suave
-            switchInCurve: Curves.easeInOutSine,
-            switchOutCurve: Curves.easeInOutSine,
-            transitionBuilder: (Widget child, Animation<double> animation) {
-
-              final bool isAjustes = child.key == const ValueKey('ajustes');
-
-              // CORRECCIÓN: Ahora viene desde el 100% (1.0) del borde exterior del teléfono,
-              // no desde el centro, eliminando el efecto de teletransporte.
-              final double offsetX = isAjustes ? 1.0 : -1.0;
-
-              final offsetAnimation = Tween<Offset>(
-                begin: Offset(offsetX, 0.0),
-                end: Offset.zero,
-              ).animate(animation);
-
-              return FadeTransition(
-                opacity: animation,
-                child: SlideTransition(
-                  position: offsetAnimation,
-                  child: AnimatedBuilder(
-                    animation: animation,
-                    builder: (context, widgetChild) {
-                      return ShaderMask(
-                        shaderCallback: (Rect bounds) {
-                          return LinearGradient(
-                            begin: isAjustes ? Alignment.centerLeft : Alignment.centerRight,
-                            end: isAjustes ? Alignment.centerRight : Alignment.centerLeft,
-                            colors: [
-                              // El borde se hace opaco uniformemente mientras entra
-                              Colors.white.withOpacity(animation.value),
-                              Colors.white
-                            ],
-                            stops: const [0.0, 0.25], // Ampliado al 25% para un difuminado más inmersivo
-                          ).createShader(bounds);
-                        },
-                        blendMode: BlendMode.dstIn,
-                        child: widgetChild,
-                      );
-                    },
-                    child: child,
-                  ),
-                ),
-              );
-            },
-            child: _screens[_selectedIndex],
+          // 1. PANTALLA OFERTAS
+          SlideTransition(
+            position: Tween<Offset>(begin: Offset.zero, end: const Offset(-1.0, 0.0))
+                .animate(CurvedAnimation(parent: _pageController, curve: Curves.easeInOutSine)),
+            child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  const RepaintBoundary(child: OfertasScreen()),
+                  // HALO DINÁMICO (Derecho): Solo visible al salir hacia la izquierda
+                  Positioned(
+                    right: -70, top: 0, bottom: 0, width: 70,
+                    child: FadeTransition(
+                      opacity: _pageController, // Se desvanece al salir
+                      child: Container(
+                          decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [const Color(0xFFF5F5F5), const Color(0xFFF5F5F5).withOpacity(0.0)],
+                              )
+                          )
+                      ),
+                    ),
+                  )
+                ]
+            ),
           ),
 
-          // BARRA INFERIOR (MENÚ)
+          // 2. PANTALLA AJUSTES
+          SlideTransition(
+            position: Tween<Offset>(begin: const Offset(1.0, 0.0), end: Offset.zero)
+                .animate(CurvedAnimation(parent: _pageController, curve: Curves.easeInOutSine)),
+            child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  const RepaintBoundary(child: AjustesScreen()),
+                  // HALO DINÁMICO (Izquierdo): Solo visible mientras entra
+                  Positioned(
+                    left: -70, top: 0, bottom: 0, width: 70,
+                    child: FadeTransition(
+                      opacity: _pageController, // Aparece mientras entra
+                      child: Container(
+                          decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [const Color(0xFFF5F5F5).withOpacity(0.0), const Color(0xFFF5F5F5)],
+                              )
+                          )
+                      ),
+                    ),
+                  )
+                ]
+            ),
+          ),
+
+          // BARRA INFERIOR Y BOTÓN (Aislados en RepaintBoundary)
           Align(
             alignment: Alignment.bottomCenter,
-            child: Container(
-              height: 80,
-              padding: const EdgeInsets.only(bottom: 20),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: const BorderRadius.only(topLeft: Radius.circular(20), topRight: Radius.circular(20)),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 10,
-                    offset: const Offset(0, -4),
-                  )
-                ],
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: InkWell(
-                      onTap: () => setState(() => _selectedIndex = 0),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.local_offer, color: _selectedIndex == 0 ? const Color(0xFF8B0000) : Colors.grey),
-                          Text("Ofertas", style: TextStyle(color: _selectedIndex == 0 ? const Color(0xFF8B0000) : Colors.grey, fontSize: 11, fontWeight: FontWeight.bold)),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 80), // Espacio para la cámara
-                  Expanded(
-                    child: InkWell(
-                      onTap: () => setState(() => _selectedIndex = 1),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.settings, color: _selectedIndex == 1 ? const Color(0xFF8B0000) : Colors.grey),
-                          Text("Ajustes", style: TextStyle(color: _selectedIndex == 1 ? const Color(0xFF8B0000) : Colors.grey, fontSize: 11, fontWeight: FontWeight.bold)),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
+            child: RepaintBoundary(
+              child: Container(
+                height: 80,
+                padding: const EdgeInsets.only(bottom: 20),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: const BorderRadius.only(topLeft: Radius.circular(20), topRight: Radius.circular(20)),
+                  boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, -4))],
+                ),
+                child: Row(
+                  children: [
+                    _buildNavTab(0, Icons.local_offer, "Ofertas"),
+                    const SizedBox(width: 80),
+                    _buildNavTab(1, Icons.settings, "Ajustes"),
+                  ],
+                ),
               ),
             ),
           ),
 
-          // Botón de Cámara Central
           Positioned(
             bottom: 35,
             left: MediaQuery.of(context).size.width / 2 - 32.5,
-            child: ScaleTransition(
-              scale: Tween(begin: 1.0, end: 1.08).animate(CurvedAnimation(parent: _cameraController, curve: Curves.easeInOut)),
-              child: FloatingActionButton(
-                backgroundColor: const Color(0xFF8B0000),
-                elevation: 6,
-                onPressed: _abrirCamara,
-                child: const Icon(Icons.camera_alt, color: Colors.white, size: 32),
+            child: RepaintBoundary(
+              child: ScaleTransition(
+                scale: Tween(begin: 1.0, end: 1.08).animate(CurvedAnimation(parent: _cameraController, curve: Curves.easeInOut)),
+                child: FloatingActionButton(
+                  backgroundColor: const Color(0xFF8B0000),
+                  elevation: 6,
+                  onPressed: () {},
+                  child: const Icon(Icons.camera_alt, color: Colors.white, size: 32),
+                ),
               ),
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildNavTab(int index, IconData icon, String label) {
+    bool isSelected = _selectedIndex == index;
+    return Expanded(
+      child: InkWell(
+        onTap: () => _onItemTapped(index),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: isSelected ? const Color(0xFF8B0000) : Colors.grey),
+            Text(label, style: TextStyle(color: isSelected ? const Color(0xFF8B0000) : Colors.grey, fontSize: 11, fontWeight: FontWeight.bold)),
+          ],
+        ),
       ),
     );
   }
