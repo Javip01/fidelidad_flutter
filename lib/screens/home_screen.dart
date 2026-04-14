@@ -17,13 +17,16 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
+
+    // Animación de latido para el botón central
     _cameraController = AnimationController(
       duration: const Duration(milliseconds: 1500),
       vsync: this,
     )..repeat(reverse: true);
 
+    // Animación de las pantallas: 550ms con curva suave (como en el código visual que te gustó)
     _pageController = AnimationController(
-      duration: const Duration(milliseconds: 600), // Un poco más lento para que se aprecie la fluidez
+      duration: const Duration(milliseconds: 550),
       vsync: this,
     );
   }
@@ -35,9 +38,29 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     super.dispose();
   }
 
+  // Cámara a prueba de errores
+  Future<void> _abrirCamara() async {
+    try {
+      final ImagePicker picker = ImagePicker();
+      await picker.pickImage(source: ImageSource.camera);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Error al abrir la cámara.', style: TextStyle(color: Colors.white)),
+            backgroundColor: Color(0xFF8B0000),
+          ),
+        );
+      }
+    }
+  }
+
   void _onItemTapped(int index) {
     if (_selectedIndex == index) return;
+
     setState(() => _selectedIndex = index);
+
+    // Reproduce la animación según la pestaña tocada
     if (index == 1) {
       _pageController.forward();
     } else {
@@ -47,70 +70,93 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-    // Definimos una animación de opacidad que solo es visible durante el trayecto
-    // El "Interval" hace que aparezca rápido al inicio y desaparezca al final
-    final Animation<double> haloOpacity = CurvedAnimation(
-      parent: _pageController,
-      curve: const Interval(0.1, 0.9, curve: Curves.easeInOut),
-    );
-
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
+      backgroundColor: const Color(0xFFF5F5F5), // Color de fondo base para la fusión
       body: Stack(
         children: [
-          // 1. PANTALLA OFERTAS
-          SlideTransition(
-            position: Tween<Offset>(begin: Offset.zero, end: const Offset(-1.0, 0.0))
+          // ==========================================
+          // 1. PANTALLA OFERTAS (Arquitectura Zero-Lag + Visual Fade)
+          // ==========================================
+          // Mientras _pageController va de 0 a 1, Ofertas se hace transparente (1.0 -> 0.0)
+          FadeTransition(
+            opacity: Tween<double>(begin: 1.0, end: 0.0)
                 .animate(CurvedAnimation(parent: _pageController, curve: Curves.easeInOutSine)),
-            child: Stack(
-                clipBehavior: Clip.none,
+            // Y se desliza hacia la izquierda (0.0 -> -1.0)
+            child: SlideTransition(
+              position: Tween<Offset>(begin: Offset.zero, end: const Offset(-1.0, 0.0))
+                  .animate(CurvedAnimation(parent: _pageController, curve: Curves.easeInOutSine)),
+              child: Stack(
+                clipBehavior: Clip.none, // Permite dibujar el halo fuera de la pantalla
                 children: [
                   const RepaintBoundary(child: OfertasScreen()),
-                  // HALO DINÁMICO (Derecho): Solo visible al salir hacia la izquierda
+
+                  // EL HALO EXTERNO (Visual exacto de tu primer código)
                   Positioned(
-                    right: -70, top: 0, bottom: 0, width: 70,
-                    child: FadeTransition(
-                      opacity: _pageController, // Se desvanece al salir
-                      child: Container(
-                          decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [const Color(0xFFF5F5F5), const Color(0xFFF5F5F5).withOpacity(0.0)],
-                              )
-                          )
+                    top: 0,
+                    bottom: 0,
+                    right: -70,
+                    width: 70,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.centerLeft,
+                          end: Alignment.centerRight,
+                          colors: [
+                            const Color(0xFFF5F5F5), // Sólido tocando la pantalla
+                            const Color(0xFFF5F5F5).withOpacity(0.0), // Transparente lejos
+                          ],
+                        ),
                       ),
                     ),
-                  )
-                ]
+                  ),
+                ],
+              ),
             ),
           ),
 
-          // 2. PANTALLA AJUSTES
-          SlideTransition(
-            position: Tween<Offset>(begin: const Offset(1.0, 0.0), end: Offset.zero)
+          // ==========================================
+          // 2. PANTALLA AJUSTES (Arquitectura Zero-Lag + Visual Fade)
+          // ==========================================
+          // Mientras _pageController va de 0 a 1, Ajustes se hace opaco (0.0 -> 1.0)
+          FadeTransition(
+            opacity: Tween<double>(begin: 0.0, end: 1.0)
                 .animate(CurvedAnimation(parent: _pageController, curve: Curves.easeInOutSine)),
-            child: Stack(
+            // Y se desliza desde la derecha hacia el centro (1.0 -> 0.0)
+            child: SlideTransition(
+              position: Tween<Offset>(begin: const Offset(1.0, 0.0), end: Offset.zero)
+                  .animate(CurvedAnimation(parent: _pageController, curve: Curves.easeInOutSine)),
+              child: Stack(
                 clipBehavior: Clip.none,
                 children: [
                   const RepaintBoundary(child: AjustesScreen()),
-                  // HALO DINÁMICO (Izquierdo): Solo visible mientras entra
+
+                  // EL HALO EXTERNO (Visual exacto de tu primer código)
                   Positioned(
-                    left: -70, top: 0, bottom: 0, width: 70,
-                    child: FadeTransition(
-                      opacity: _pageController, // Aparece mientras entra
-                      child: Container(
-                          decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [const Color(0xFFF5F5F5).withOpacity(0.0), const Color(0xFFF5F5F5)],
-                              )
-                          )
+                    top: 0,
+                    bottom: 0,
+                    left: -70,
+                    width: 70,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.centerLeft,
+                          end: Alignment.centerRight,
+                          colors: [
+                            const Color(0xFFF5F5F5).withOpacity(0.0), // Transparente lejos
+                            const Color(0xFFF5F5F5), // Sólido tocando la pantalla
+                          ],
+                        ),
                       ),
                     ),
-                  )
-                ]
+                  ),
+                ],
+              ),
             ),
           ),
 
-          // BARRA INFERIOR Y BOTÓN (Aislados en RepaintBoundary)
+          // ==========================================
+          // 3. BARRA INFERIOR (Aislada contra el lag)
+          // ==========================================
           Align(
             alignment: Alignment.bottomCenter,
             child: RepaintBoundary(
@@ -133,6 +179,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             ),
           ),
 
+          // ==========================================
+          // 4. BOTÓN DE CÁMARA (Aislado contra el lag)
+          // ==========================================
           Positioned(
             bottom: 35,
             left: MediaQuery.of(context).size.width / 2 - 32.5,
@@ -142,7 +191,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 child: FloatingActionButton(
                   backgroundColor: const Color(0xFF8B0000),
                   elevation: 6,
-                  onPressed: () {},
+                  onPressed: _abrirCamara,
                   child: const Icon(Icons.camera_alt, color: Colors.white, size: 32),
                 ),
               ),
