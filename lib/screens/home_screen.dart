@@ -18,13 +18,11 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   void initState() {
     super.initState();
 
-    // Animación de latido para el botón central
     _cameraController = AnimationController(
       duration: const Duration(milliseconds: 1500),
       vsync: this,
     )..repeat(reverse: true);
 
-    // Animación de las pantallas: 550ms con curva suave (como en el código visual que te gustó)
     _pageController = AnimationController(
       duration: const Duration(milliseconds: 550),
       vsync: this,
@@ -38,7 +36,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     super.dispose();
   }
 
-  // Cámara a prueba de errores
   Future<void> _abrirCamara() async {
     try {
       final ImagePicker picker = ImagePicker();
@@ -60,7 +57,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
     setState(() => _selectedIndex = index);
 
-    // Reproduce la animación según la pestaña tocada
     if (index == 1) {
       _pageController.forward();
     } else {
@@ -71,86 +67,68 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5), // Color de fondo base para la fusión
+      backgroundColor: const Color(0xFFF5F5F5),
       body: Stack(
         children: [
           // ==========================================
-          // 1. PANTALLA OFERTAS (Arquitectura Zero-Lag + Visual Fade)
+          // 1. PANTALLA OFERTAS
           // ==========================================
-          // Mientras _pageController va de 0 a 1, Ofertas se hace transparente (1.0 -> 0.0)
-          FadeTransition(
-            opacity: Tween<double>(begin: 1.0, end: 0.0)
+          SlideTransition(
+            position: Tween<Offset>(begin: Offset.zero, end: const Offset(-1.0, 0.0))
                 .animate(CurvedAnimation(parent: _pageController, curve: Curves.easeInOutSine)),
-            // Y se desliza hacia la izquierda (0.0 -> -1.0)
-            child: SlideTransition(
-              position: Tween<Offset>(begin: Offset.zero, end: const Offset(-1.0, 0.0))
-                  .animate(CurvedAnimation(parent: _pageController, curve: Curves.easeInOutSine)),
-              child: Stack(
-                clipBehavior: Clip.none, // Permite dibujar el halo fuera de la pantalla
-                children: [
-                  const RepaintBoundary(child: OfertasScreen()),
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                const RepaintBoundary(child: OfertasScreen()), // La pantalla base intacta
 
-                  // EL HALO EXTERNO (Visual exacto de tu primer código)
-                  Positioned(
-                    top: 0,
-                    bottom: 0,
-                    right: -70,
-                    width: 70,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.centerLeft,
-                          end: Alignment.centerRight,
-                          colors: [
-                            const Color(0xFFF5F5F5), // Sólido tocando la pantalla
-                            const Color(0xFFF5F5F5).withOpacity(0.0), // Transparente lejos
-                          ],
-                        ),
+                // EL INTERRUPTOR MAESTRO (Sin halo, solo el fundido perfecto)
+                AnimatedBuilder(
+                  animation: _pageController,
+                  builder: (context, child) {
+                    if (_pageController.value == 0.0) {
+                      return const SizedBox.shrink(); // Destruye el efecto cuando está quieta
+                    }
+                    return Positioned.fill(
+                      child: FadeTransition(
+                        opacity: Tween<double>(begin: 0.0, end: 1.0).animate(
+                            CurvedAnimation(parent: _pageController, curve: Curves.easeInOutSine)),
+                        child: Container(color: const Color(0xFFF5F5F5)),
                       ),
-                    ),
-                  ),
-                ],
-              ),
+                    );
+                  },
+                ),
+              ],
             ),
           ),
 
           // ==========================================
-          // 2. PANTALLA AJUSTES (Arquitectura Zero-Lag + Visual Fade)
+          // 2. PANTALLA AJUSTES
           // ==========================================
-          // Mientras _pageController va de 0 a 1, Ajustes se hace opaco (0.0 -> 1.0)
-          FadeTransition(
-            opacity: Tween<double>(begin: 0.0, end: 1.0)
+          SlideTransition(
+            position: Tween<Offset>(begin: const Offset(1.0, 0.0), end: Offset.zero)
                 .animate(CurvedAnimation(parent: _pageController, curve: Curves.easeInOutSine)),
-            // Y se desliza desde la derecha hacia el centro (1.0 -> 0.0)
-            child: SlideTransition(
-              position: Tween<Offset>(begin: const Offset(1.0, 0.0), end: Offset.zero)
-                  .animate(CurvedAnimation(parent: _pageController, curve: Curves.easeInOutSine)),
-              child: Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  const RepaintBoundary(child: AjustesScreen()),
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                const RepaintBoundary(child: AjustesScreen()),
 
-                  // EL HALO EXTERNO (Visual exacto de tu primer código)
-                  Positioned(
-                    top: 0,
-                    bottom: 0,
-                    left: -70,
-                    width: 70,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.centerLeft,
-                          end: Alignment.centerRight,
-                          colors: [
-                            const Color(0xFFF5F5F5).withOpacity(0.0), // Transparente lejos
-                            const Color(0xFFF5F5F5), // Sólido tocando la pantalla
-                          ],
-                        ),
+                // EL INTERRUPTOR MAESTRO (Sin halo, solo el fundido perfecto)
+                AnimatedBuilder(
+                  animation: _pageController,
+                  builder: (context, child) {
+                    if (_pageController.value == 1.0) {
+                      return const SizedBox.shrink(); // Destruye el efecto cuando está quieta
+                    }
+                    return Positioned.fill(
+                      child: FadeTransition(
+                        opacity: Tween<double>(begin: 1.0, end: 0.0).animate(
+                            CurvedAnimation(parent: _pageController, curve: Curves.easeInOutSine)),
+                        child: Container(color: const Color(0xFFF5F5F5)),
                       ),
-                    ),
-                  ),
-                ],
-              ),
+                    );
+                  },
+                ),
+              ],
             ),
           ),
 
