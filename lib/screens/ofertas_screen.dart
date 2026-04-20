@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'transaccion_model.dart'; // Importación necesaria para escuchar el estado global
 
 class OfertasScreen extends StatefulWidget {
   const OfertasScreen({super.key});
@@ -116,6 +117,7 @@ class _OfertasScreenState extends State<OfertasScreen> {
     );
   }
 
+  // CABECERA ACTUALIZADA CON VALUE LISTENABLE BUILDER
   Widget _buildHeader(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -129,7 +131,22 @@ class _OfertasScreenState extends State<OfertasScreen> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(color: const Color(0xFF1A0000), borderRadius: BorderRadius.circular(20), border: Border.all(color: const Color(0xFFFF0033), width: 2)),
-              child: const Row(children: [Text("💎", style: TextStyle(fontSize: 16)), SizedBox(width: 8), Text("1.250 pts", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold))]),
+
+              // MAGIA AQUÍ: Escuchamos el estado global
+              child: ValueListenableBuilder<int>(
+                valueListenable: globalPuntos,
+                builder: (context, puntos, child) {
+                  String ptsFormat = puntos.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.');
+                  return Row(
+                      children: [
+                        const Text("💎", style: TextStyle(fontSize: 16)),
+                        const SizedBox(width: 8),
+                        Text("$ptsFormat pts", style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold))
+                      ]
+                  );
+                },
+              ),
+
             ),
           ),
         ],

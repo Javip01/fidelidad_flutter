@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
-import 'register_screen.dart'; // Asegúrate de que esta importación apunta a tu AnimacionXMLGradient
+import 'register_screen.dart'; // Tu AnimacionXMLGradient
+import 'historial_puntos_screen.dart';
+import 'transaccion_model.dart'; // <-- IMPORTANTE: Importamos las variables globales
 
 class PuntosScreen extends StatefulWidget {
   const PuntosScreen({super.key});
@@ -9,7 +11,6 @@ class PuntosScreen extends StatefulWidget {
 }
 
 class _PuntosScreenState extends State<PuntosScreen> {
-  // POPUP CENTRAL DEL QR OPTIMIZADO PARA 60FPS
   void _mostrarQrPopup() {
     showGeneralDialog(
       context: context,
@@ -19,15 +20,14 @@ class _PuntosScreenState extends State<PuntosScreen> {
       transitionDuration: const Duration(milliseconds: 400),
       pageBuilder: (context, animation, secondaryAnimation) {
         return Center(
-          // REPAINT BOUNDARY: Convierte la ventana en una textura para animarla sin lag
           child: RepaintBoundary(
             child: Material(
-              color: const Color(0xFF1E1E1E), // VENTANA QR OSCURA
-              elevation: 24, // Sombra acelerada por hardware (sin lag)
+              color: const Color(0xFF1E1E1E),
+              elevation: 24,
               shadowColor: Colors.black,
               borderRadius: BorderRadius.circular(24),
               child: Container(
-                width: MediaQuery.of(context).size.width * 0.85, // Ancho responsivo
+                width: MediaQuery.of(context).size.width * 0.85,
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(24),
@@ -38,8 +38,6 @@ class _PuntosScreenState extends State<PuntosScreen> {
                   children: [
                     const Text("Tu Código QR", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
                     const SizedBox(height: 24),
-
-                    // REPAINT BOUNDARY 2: Congela el dibujo matemático del QR
                     RepaintBoundary(
                       child: Container(
                         padding: const EdgeInsets.all(12),
@@ -54,7 +52,6 @@ class _PuntosScreenState extends State<PuntosScreen> {
                       ),
                     ),
                     const SizedBox(height: 24),
-
                     SizedBox(
                       width: double.infinity,
                       height: 50,
@@ -93,7 +90,6 @@ class _PuntosScreenState extends State<PuntosScreen> {
           padding: const EdgeInsets.all(16.0),
           child: Column(
             children: [
-              // 1. CABECERA TUS PUNTOS CON BOTÓN ATRÁS INTEGRADO
               AnimacionXMLGradient(
                 borderRadius: BorderRadius.circular(24),
                 child: SizedBox(
@@ -104,13 +100,22 @@ class _PuntosScreenState extends State<PuntosScreen> {
                         padding: const EdgeInsets.symmetric(vertical: 32),
                         child: Center(
                           child: Column(
-                            children: const [
-                              Text("TUS PUNTOS", style: TextStyle(color: Colors.white70, letterSpacing: 2, fontSize: 12)),
-                              Text("1.250", style: TextStyle(color: Colors.white, fontSize: 56, fontWeight: FontWeight.bold)),
+                            children: [
+                              const Text("TUS PUNTOS", style: TextStyle(color: Colors.white70, letterSpacing: 2, fontSize: 12)),
+                              // EL NÚMERO AHORA ESCUCHA AL ESTADO GLOBAL
+                              ValueListenableBuilder<int>(
+                                valueListenable: globalPuntos,
+                                builder: (context, puntos, child) {
+                                  // Formateamos para que ponga el punto de los miles (ej. 1.250)
+                                  String puntosFormateados = puntos.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.');
+                                  return Text(puntosFormateados, style: const TextStyle(color: Colors.white, fontSize: 56, fontWeight: FontWeight.bold));
+                                },
+                              ),
                             ],
                           ),
                         ),
                       ),
+                      // BOTÓN ATRÁS (IZQUIERDA)
                       Positioned(
                         top: 8,
                         left: 8,
@@ -119,13 +124,25 @@ class _PuntosScreenState extends State<PuntosScreen> {
                           onPressed: () => Navigator.pop(context),
                         ),
                       ),
+                      // BOTÓN HISTORIAL (DERECHA)
+                      Positioned(
+                        top: 8,
+                        right: 8,
+                        child: IconButton(
+                          icon: const Icon(Icons.history, color: Colors.white),
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => const HistorialPuntosScreen()),
+                            );
+                          },
+                        ),
+                      ),
                     ],
                   ),
                 ),
               ),
               const SizedBox(height: 16),
-
-              // 2. INFO BANNER
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(12),
@@ -139,16 +156,16 @@ class _PuntosScreenState extends State<PuntosScreen> {
                   children: const [
                     Icon(Icons.info, color: Colors.blue, size: 18),
                     SizedBox(width: 8),
-                    Text(
-                        "Pulsa nuestro logo central para abrir tu código QR.",
-                        style: TextStyle(color: Colors.black54, fontSize: 12)
+                    Expanded(
+                      child: Text(
+                          "Pulsa nuestro logo central para abrir tu código QR.",
+                          style: TextStyle(color: Colors.black54, fontSize: 12)
+                      ),
                     ),
                   ],
                 ),
               ),
               const SizedBox(height: 16),
-
-              // 3. TÍTULOS PESTAÑAS
               Row(
                 children: [
                   Expanded(child: _buildTabTitle("Restaurantes", true)),
@@ -157,8 +174,6 @@ class _PuntosScreenState extends State<PuntosScreen> {
                 ],
               ),
               const SizedBox(height: 8),
-
-              // 4. CUADRÍCULA Y BOTÓN CENTRAL
               Expanded(
                 child: Stack(
                   children: [
@@ -195,7 +210,6 @@ class _PuntosScreenState extends State<PuntosScreen> {
                         ),
                       ],
                     ),
-                    // BOTÓN LOGO CENTRAL
                     Center(
                       child: GestureDetector(
                         onTap: _mostrarQrPopup,
