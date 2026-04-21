@@ -111,54 +111,51 @@ flutter run --release
 
 HAY QUE REORGANIZAR LA INFORMACIÓN DEL README
 
-# 📖 Documentación del Proyecto: The Ring Private
+# 📖 Documentación del Proyecto: Fidelidad Flutter (NightRewards)
 
 ## 1. ¿Qué es la app y de qué va?
-**The Ring Private** es una aplicación móvil exclusiva diseñada para la gestión integral de acceso, comunicación y experiencia de usuario de un club privado. Su objetivo principal es digitalizar y asegurar el ecosistema del club, sustituyendo los carnets físicos tradicionales por un sistema de acceso dinámico y cifrado, al mismo tiempo que centraliza las notificaciones y el soporte en tiempo real para los usuarios.
+**Fidelidad Flutter** es una plataforma móvil de alto rendimiento diseñada para la gamificación y fidelización de clientes en el sector del ocio nocturno. La aplicación permite a los usuarios centralizar su experiencia social: descubriendo promociones exclusivas, acumulando puntos ("Diamantes") mediante el escaneado de consumiciones reales y canjeando recompensas en una red de locales asociados (discotecas, bares y salas de eventos).
 
 ## 2. ¿Para quién está dirigida?
-La plataforma está diseñada para dos perfiles principales:
-* **Socios / Miembros VIP:** Usuarios que han adquirido una membresía en el club. Utilizan la app para identificarse en puerta, leer las normativas, recibir notificaciones de eventos y contactar con el staff.
-* **Staff y Personal de Seguridad:** Aunque la app principal es para el socio, el personal de seguridad interactúa con ella validando visual o digitalmente los códigos de acceso generados.
+* **Usuarios Finales:** Clientes de ocio nocturno que buscan optimizar sus gastos y acceder a beneficios VIP (entradas, copas, reservaciones) mediante la recurrencia.
+* **Establecimientos Asociados:** Negocios que necesitan una herramienta digital ágil para fidelizar a su clientela sin depender de tarjetas de cartón físicas, obteniendo una imagen de marca premium y moderna.
 
 ## 3. ¿Quién la desarrolló?
-El diseño, la arquitectura de software y el desarrollo completo de la aplicación han sido llevados a cabo por **Mauricio Javier Pérez Gavilanes**.
+El diseño de interfaz (UI), la arquitectura de la experiencia de usuario (UX) y el desarrollo íntegro del software han sido realizados por **Mauricio Javier Pérez Gavilanes**.
 
 ## 4. ¿Cómo funciona? (Resumen de Flujo)
-El funcionamiento de la app es directo y seguro:
-1.  **Autenticación:** Al abrir la aplicación, el usuario debe identificarse mediante DNI o Correo y contraseña contra una base de datos segura.
-2.  **Dashboard:** Una vez dentro, la pantalla principal (**Home**) actúa como un panel de control donde el usuario visualiza notificaciones y accede a su perfil.
-3.  **Acciones Críticas:** Desde la Home, el usuario puede realizar las dos funciones principales: generar su pase de acceso inmediato o solicitar soporte técnico mediante el botón flotante.
+1.  **Exploración:** El usuario consulta el carrusel dinámico de ofertas para decidir su destino.
+2.  **Consumo y Captura:** Al realizar un gasto en el local, el usuario utiliza el escáner integrado para registrar su ticket.
+3.  **Cálculo de Recompensa:** El sistema procesa el gasto y asigna puntos proporcionales (ej. 1€ = 10 pts) al saldo global en tiempo real.
+4.  **Canjeo:** El usuario selecciona un premio del catálogo, genera un ticket digital y lo valida con el staff del local.
 
 ## 5. Funciones Relevantes ("Funciones Tochas")
-El software ha sido desarrollado utilizando **Flutter (Dart)** para el frontend móvil y **Firebase (Google)** para la autenticación y base de datos en la nube.
+El software destaca por una implementación técnica avanzada sobre **Flutter (Dart)**:
 
-* **Sistema de Acceso Seguro Dinámico (QR):** Para evitar suplantaciones de identidad y el uso de capturas de pantalla, la app genera un código QR único vinculado al ID del usuario. Este código cuenta con un temporizador de seguridad que se destruye y **regenera automáticamente cada 60 segundos**.
-* **Motor de Físicas Personalizado (Aura Repelente):** El botón de soporte (WhatsApp) es un elemento flotante que el usuario puede arrastrar libremente por toda la pantalla (optimizado mediante GPU). Incluye un algoritmo matemático (`math.atan2`) que detecta la cercanía con el botón principal del QR y lo **repele magnéticamente**, garantizando que los elementos vitales de la interfaz nunca se solapen.
-* **UI Reactiva en Tiempo Real (Estado Global):** Mediante el uso de `ValueNotifier`, la aplicación permite cambiar el idioma (Inglés/Español) y el tema de apariencia (Modo Claro/Oscuro) de forma instantánea. No requiere pantallas de carga ni reiniciar la app para aplicar los cambios.
-* **Autenticación Inteligente:** El sistema de Login detecta automáticamente si el usuario ingresa un correo electrónico o un DNI, mapeando el DNI a su registro interno correspondiente en Firebase de forma transparente para el usuario.
+* **Motor de Transición de Pantallas "Liquid Smooth":** Utiliza un `SmoothTransitionScaffold` propio que implementa una "sábana de fusión" blanca con opacidad variable basada en curvas sinusoidales (`math.sin`). Esto permite una navegación inmersiva a 60 FPS constantes, eliminando el impacto visual de los bordes rígidos.
+* **Estado Global Reactivo:** Implementación de `ValueNotifier` y `ValueListenableBuilder` para la sincronización instantánea de puntos. Cualquier cambio en el historial se refleja automáticamente en la Home y la pantalla de Puntos sin necesidad de recargas o estados de carga.
+* **Renderizado de Gradientes por GPU:** Uso de la clase `AnimacionXMLGradient` que cicla degradados lineales complejos. Al utilizar `RepaintBoundary`, la carga gráfica se delega al hardware especializado, permitiendo animaciones fluidas sin calentar el procesador.
+* **Generador de Tickets Digitales:** Un motor interno que transforma los datos de la transacción en un ticket visual con estética *monospace* y cálculo automático de caducidad (ventana móvil de 180 días).
 
-## 6. Casos de Uso (Estructura para Diagramas)
+## 6. Casos de Uso
 
-### Caso de Uso 1: Validación en Puerta (Control de Acceso)
-* **Actor:** Socio VIP.
-* **Flujo:** El socio llega al club → Abre la app → Pulsa el botón central (QR) → El sistema genera un token temporal → Se muestra el código con cuenta atrás de 60s → El personal de seguridad valida el código → Acceso concedido.
+### Caso de Uso 1: Acumulación de Puntos (Escáner)
+* **Actor:** Cliente.
+* **Flujo:** Cliente recibe ticket → Abre cámara en la app → Escanea código → El sistema inyecta los puntos al estado global → El saldo se actualiza visualmente en todas las pantallas.
 
-### Caso de Uso 2: Asistencia Inmediata (Soporte)
-* **Actor:** Socio VIP.
-* **Flujo:** El socio requiere asistencia → Localiza el icono flotante de WhatsApp → Lo pulsa → El sistema inyecta un mensaje predefinido → Se abre la app nativa de WhatsApp redirigiendo al contacto oficial de la empresa.
+### Caso de Uso 2: Decisión de Ocio (Discovery)
+* **Actor:** Cliente.
+* **Flujo:** Cliente abre la app → Desliza el carrusel de ofertas → Consulta el panel de "Normas" para verificar validez → Elige el establecimiento basado en la promoción activa.
 
-### Caso de Uso 3: Autenticación de Usuario (Login)
-* **Actor:** Socio.
-* **Flujo:** El usuario introduce credenciales (DNI/Password) → La app cifra los datos → Firebase valida el token → El sistema carga el perfil y redirige a la Home.
+### Caso de Uso 3: Canjeo en Barra (Redemption)
+* **Actor:** Cliente y Staff.
+* **Flujo:** Cliente entra en "Gastar Puntos" → Elige local y premio → Confirma canje → El sistema genera un ticket digital con el logo animado del local → El staff valida visualmente y entrega el premio.
 
-## 7. Versiones y Especificaciones de Hardware/Software
-Para un rendimiento óptimo de las animaciones y la conexión en tiempo real:
-
-* **Versión Actual:** `1.0.0+1`
-* **Requisitos Android:** Android 6.0 (API 23) o superior. Recomendado dispositivos de 64 bits (ARM64).
-* **Requisitos iOS:** iOS 12.0 o superior (iPhone 6s en adelante).
-* **Hardware Común:** * Conexión a Internet activa (4G/5G/Wi-Fi).
-   * Pantalla táctil capacitiva.
-   * Cámara funcional (para futuras implementaciones de foto de perfil).
+## 7. Especificaciones Técnicas
+* **Versión:** 1.0.0+1
+* **Arquitectura:** Clean UI con gestión de estado desacoplada.
+* **Compatibilidad:**
+   * **Android:** 6.0 (API 23) en adelante.
+   * **iOS:** 12.0 o superior.
+* **Hardware Requerido:** Cámara trasera (AF), conexión a datos/Wi-Fi y pantalla capacitiva.
 
