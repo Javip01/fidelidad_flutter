@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'transaccion_model.dart';
+import 'ofertas_screen.dart'; // IMPORTANTE: Aquí importamos tu AnimacionXMLGradient
 
 class HistorialPuntosScreen extends StatefulWidget {
   const HistorialPuntosScreen({super.key});
@@ -175,7 +176,18 @@ class _CardTicket extends StatelessWidget {
           children: [
             Row(
               children: [
-                Image.asset(transaccion.logoPath, width: 40, height: 40),
+                // AQUÍ APLICAMOS LA ANIMACIÓN Y EL FONDO AL LOGO
+                SizedBox(
+                  width: 54,
+                  height: 54,
+                  child: AnimacionXMLGradient(
+                    borderRadius: BorderRadius.circular(14),
+                    child: Padding(
+                      padding: const EdgeInsets.all(10.0),
+                      child: Image.asset(transaccion.logoPath, fit: BoxFit.contain),
+                    ),
+                  ),
+                ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
